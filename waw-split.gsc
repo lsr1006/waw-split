@@ -4,17 +4,20 @@
 
 init()
 {
-           
+    
 	// ============================================================================================================
 	// 		 _       __     _       __            _____ ____  __    __________
 	// 		| |     / /___ | |     / /           / ___// __ \/ /   /  _/_  __/
-	// 		| | /| / / __ `/ | /| / /  ______    \__ \/ /_/ / /    / /  / /   		WaW-Split (Version 1)
+	// 		| | /| / / __ `/ | /| / /  ______    \__ \/ /_/ / /    / /  / /   		WaW-Split (Version 1.1)
 	// 		| |/ |/ / /_/ /| |/ |/ /  /_____/   ___/ / ____/ /____/ /  / /
 	// 		|__/|__/\__,_/ |__/|__/            /____/_/   /_____/___/ /_/
 	//
 	//
-	//		Customizable speedrun split timer for World at War (Plutonium) w/ optional backspeed fix
-	//		Complies with ZWR world record rules: https://zwr.gg/rules/#section-21
+	//		Customizable speedrun split timer for World at War (Plutonium) w/ optional backspeed fix.
+	//		Complies with ZWR world record rules:
+	//			https://zwr.gg/rules/#section-1
+	//			https://zwr.gg/rules/#section-19
+	//			https://zwr.gg/leaderboards/waw/100-speedrun/shi-no-numa/
 	//
 	// ============================================== TIMER SETTINGS  ============================================
 	//
@@ -29,12 +32,12 @@ init()
 	//		Color values are (RED, GREEN, YELLOW) each with a value between 0.0 and 1.0
 	//		Alpha values are between 0.0 and 1.0
 	
-	level.FIX_BACKSPEED = true;	// Disable this to revert the backspeed fix
+	level.FIX_BACKSPEED = true;						// Disable this to revert the backspeed fix
 	
-	level.HUD_X_COORD = -100;		// Move the timer HUD on X axis (left=negative, right=positive)
-	level.HUD_Y_COORD = 0;			// Move the timer HUD on Y axis (up=negative, down=positive)
-	level.HUD_COL_SPACING = 70;		// Space between the label/value columns
-	level.HUD_ROW_SPACING = 10;		// Space between the data rows
+	level.HUD_X_COORD = -100;						// Move the timer on X axis (left=negative)
+	level.HUD_Y_COORD = 0;							// Move the timer on Y axis (up=negative)
+	level.HUD_COL_SPACING = 70;						// Space between the label/value columns
+	level.HUD_ROW_SPACING = 10;						// Space between the data rows
 	
 	level.GAME_TIME_COLOR = (1, 0, 0);
 	level.GAME_TIME_ALPHA = 1;
@@ -51,11 +54,11 @@ init()
 	level.HISTORY_ALPHA = 0.9;
 	level.HISTORY_LABEL_TEXT = "Round";
 	level.HISTORY_LABEL_DELIMITER = ":";
-													
-	level.MILESTONES_HIDDEN = false;	// Hide the Round milestones section
-	level.MILESTONES = [];				// Cumulative time will show on HUD upon reaching certain rounds
-	level.MILESTONES[0] = 10;			// Usefull for world record attempts (30, 50, 70, 100)
-	level.MILESTONES[1] = 30;			// WARNING: Don't add too many! keep [index] increasing by 1
+												
+	level.MILESTONES_HIDDEN = false;				// Hide the Round milestones section
+	level.MILESTONES = [];							// Cumulative time will show on HUD upon reaching certain rounds
+	level.MILESTONES[0] = 10;						// Usefull for world record attempts (ex: 30, 50, 70, 100)
+	level.MILESTONES[1] = 30;						// WARNING: Don't add too many! keep [index] increasing by 1
 	level.MILESTONES[2] = 50;
 	level.MILESTONES[3] = 70;
 	level.MILESTONES[4] = 100;
@@ -83,8 +86,6 @@ game_timer()
 	hud.alpha = level.GAME_TIME_ALPHA;
 	hud.color =  level.GAME_TIME_COLOR;
 	hud.fontscale = 2;
-	hud SetText("--:--");
-	level waittill("round_transition");
 	hud setTimerUp(0);
 }
 
@@ -101,7 +102,6 @@ round_timer()
 	label.alpha = level.ROUND_TIME_ALPHA;
 	label.color =  level.ROUND_TIME_LABEL_COLOR;
 	label.fontscale = 1;
-	label SetText("Round starting...");
 	
 	time = create_simple_hud( self );
 	time.foreground = true;
@@ -116,15 +116,18 @@ round_timer()
 	time.fontscale = 1;
 	
 	roundHistory = spawnStruct();
-	level waittill("round_transition");
 	init_round_history(roundHistory);
 	
 	for (;;)
 	{
-		currentRound = level.round_number;
 		time setTimerUp(0);
 		roundStart = GetTime() / 1000;
+		currentRound = level.round_number;
+		if (!isdefined(currentRound)) currentRound = 1;
 		label SetText(level.HISTORY_LABEL_TEXT + " " + currentRound + level.HISTORY_LABEL_DELIMITER);
+		
+		// Don't do anything when starting round 1
+		if (currentRound == 1) level waittill("round_transition");
 		level waittill("round_transition");
 		
 		if (level.HISTORY_MAX_COUNT == 0) continue;
@@ -201,7 +204,6 @@ milestone_timers()
 
 init_round_history(roundHistory)
 {
-	// Crude circular queue implementation to store limited round history
 	roundHistory.queue = [];
 	
 	// Index starts at last position and becomes 0 on round 1
@@ -327,12 +329,11 @@ patch_notifier()
 	{
 		backspeedStatus = "+ backspeed ";
 	}
-	hud SetText("Custom timer " + backspeedStatus + "patch in use (WaW-Split v1)");
+	hud SetText("Custom timer " + backspeedStatus + "patch in use (waw-split v1.1)");
 	wait(10);
 	hud destroy();
 }
 
-// Not the best way to do this but it works for all maps and is accurate enough
 round_monitor()
 {
 	for (;;) {
@@ -357,14 +358,12 @@ on_connect()
 on_player_spawned()
 {
 	level waittill("connected", player);
-	
-	// Custom timer functions
 	self thread round_monitor();
 	self thread game_timer();
 	if (!level.ROUND_TIME_HIDDEN) self thread round_timer();
 	if (!level.MILESTONES_HIDDEN) self thread milestone_timers();
 	
-	// Backspeed fix - (enforce the default values)
+	// Backspeed fix (enforce the default values first)
 	self SetClientDvars("player_backSpeedScale", "0.7", "player_strafeSpeedScale", "0.8");
 	if(level.FIX_BACKSPEED)
 	{
