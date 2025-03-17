@@ -25,7 +25,7 @@ Customizable in-game on-screen timer for CoD:WaW (Plutonium only) with automatic
 
 ### How to use
 - Read through the disclaimers below
-- Download waw-split.gsc
+- Download [waw-split.gsc](https://github.com/lsr1006/waw-split/releases/download/v1.1/waw-split.gsc)
 - Place the file in the plutonium 'scripts' folder for the map you want to play:
   - `C:\users\YOUR_USERNAME\AppData\Local\Plutonium\storage\t4\raw\scripts\sp\MAP_NAME\waw-split.gsc`
     - Nach Der Untoten = `nazi_zombie_prototype`
